@@ -10,10 +10,6 @@ public class LineSegment {
     public double slope;
     public int lastEdgeID;
     boolean inf;
-
-    public LineSegment() {
-        lastEdgeID = -1;
-    }
     
     public LineSegment(Point start, Point end) {
         this.start = start;
@@ -27,6 +23,7 @@ public class LineSegment {
         catch(Exception e){
             inf=true;
         }
+        this.lastEdgeID = -1;
     }
     
      public Point getIntersection(LineSegment o) {
@@ -62,8 +59,8 @@ public class LineSegment {
             p.y = slope*p.x + (start.y - slope*start.x);
         }
 
-        p.a=this;// left line.
-        p.b =o; // right line.
+        p.a=o;// left line.
+        p.b =this; // right line.
         
         if(p.y<start.y && p.y >end.y && p.y<o.start.y && p.y >o.end.y ) {
             return p;

@@ -1,7 +1,7 @@
 package boundedface;
 
+import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
 import java.util.TreeSet;
 
@@ -56,6 +56,7 @@ public class BoundedFace {
                     break;
             }
         }
+        postprocessing();
     }
 
     public void eventStart() {
@@ -64,9 +65,12 @@ public class BoundedFace {
         SweepStatus.add(currentEvent.a);
         p1 = SweepStatus.higher(currentEvent.a);
         p2 = SweepStatus.lower(currentEvent.a);
-        check = p1.getIntersection(currentEvent.a);
-        if (check != null && check.y < lambda) {
-            EventQueue.add(check);
+        
+        if(p1!=null){
+            check = p1.getIntersection(currentEvent.a);
+            if (check != null && check.y < lambda) {
+                EventQueue.add(check);
+            }
         }
         check = currentEvent.a.getIntersection(p2);
         if (check != null && check.y < lambda) {
@@ -120,6 +124,8 @@ public class BoundedFace {
         
        
         // Assigning previous and next from the edge already in linesegment with point of intersection
+        edge2.nextEdgeId = edge3.id;
+        edge3.previousEdgeId = edge2.id;
         Edgel1down = graph.edgelist.get(l1.lastEdgeID);
         if(Edgel1down != null)
                 Edgel1up = graph.edgelist.get(Edgel1down.twinEdgeId);
@@ -143,21 +149,22 @@ public class BoundedFace {
             Edgel2up.previousEdgeId = edge4.id;
             edge4.nextEdgeId = Edgel2up.id;
         }
+        
         if(l2.lastEdgeID!=-1 && l1.lastEdgeID!=-1){
             Edgel2down.nextEdgeId = Edgel1up.id;
             Edgel1up.previousEdgeId = Edgel2down.id;
         }
-        else if(l2.lastEdgeID == -1 && l2.lastEdgeID == -1){
+        else if(l2.lastEdgeID == -1 && l1.lastEdgeID == -1){
             edge4.nextEdgeId = edge1.id;
             edge1.previousEdgeId = edge4.id;
         }
-        else if(l1.lastEdgeID == -1){
-            Edgel2down.nextEdgeId = edge1.id;
-            edge1.previousEdgeId = Edgel2down.id;
-        }
-        else if(l2.lastEdgeID == -1){
+        else if(l1.lastEdgeID != -1){
             edge4.nextEdgeId = Edgel1up.id;
             Edgel1up.previousEdgeId = edge4.id;
+        }
+        else if(l2.lastEdgeID != -1){
+            Edgel2down.nextEdgeId = edge1.id;
+            edge1.previousEdgeId = Edgel2down.id;
         }
         /* next and previous assignment complete;*/
         
@@ -169,8 +176,24 @@ public class BoundedFace {
         graph.vertexlist.put(a.id, a);
         
         // Swaping the postion of line segment in height balanced tree
-        LineSet.remove(l2);
-        LineSet.add(l2);
+        LineSegment l1lower, l2higher;
+        l1lower = SweepStatus.lower(l1);
+        l2higher = SweepStatus.higher(l2);
+        Point check;
+        if(l2higher!=null){
+            check = l2higher.getIntersection(l1);
+            if (check != null && check.y < lambda) {
+                EventQueue.add(check);
+            }
+        }
+        check = l2.getIntersection(l1lower);
+        if (check != null && check.y < lambda) {
+            EventQueue.add(check);
+        }
+        l1.lastEdgeID = edge3.id;
+        l2.lastEdgeID = edge1.id;
+        SweepStatus.remove(l1);
+        SweepStatus.add(l1);
         
     }
     public void postprocessing(){
@@ -191,9 +214,8 @@ public class BoundedFace {
                         nextedge = graph.edgelist.get(twinedge.nextEdgeId);
                         lastedge.nextEdgeId = nextedge.id;
                         nextedge.previousEdgeId = lastedge.id;
-                        
                         twinedge.visited = true;
-                        currentedge = lastedge;
+                        currentedge = nextedge;
                     }
                     else{
                         lastedge = currentedge;
@@ -222,6 +244,7 @@ public class BoundedFace {
                 graph.facelist.put(f.Id, f);
             }
         }
+        System.out.println("Total faces = " + facecount );
     }
 
     private void initializeQueue() {
@@ -235,13 +258,81 @@ public class BoundedFace {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+        BoundedFace bface;
+        List<LineSegment> linesegments = new ArrayList<LineSegment>();
+        Point start,end;
+        LineSegment a;
+        //1
+        start = new Point();
+        end = new Point();
+        start.x = 1;
+        start.y = 6;
+        start.type = EventType.Start;
+        end.x = 3;
+        end.y = 2;
+        end.type = EventType.End;
+        a = new LineSegment(start, end);
+        start.a = a;
+        end.a = a;
+        linesegments.add(a);
+        //2
+        
+        start = new Point();
+        end = new Point();
+        start.x = 2;
+        start.y = 5;
+        start.type = EventType.Start;
+        end.x = 1;
+        end.y = 1;
+        end.type = EventType.End;
+        a = new LineSegment(start, end);
+        linesegments.add(a);
+        start.a = a;
+        end.a = a;
+        //3
+        
+        start = new Point();
+        end = new Point();
+        start.x = 4;
+        start.y = 4;
+        start.type = EventType.Start;
+        end.x = 1;
+        end.y = 3;
+        end.type = EventType.End;
+        a = new LineSegment(start, end);
+        linesegments.add(a);
+        start.a = a;
+        end.a = a;
+        
+       bface = new BoundedFace(linesegments);
+       
+       bface.startSweepLine();
+       
+        for (int i = 0; i < bface.facecount; i++) {
+            System.out.println(" Face " + (i+1) +" coordinates: ");
+            Edge root,nextedge;
+            Vertex v;
+            root = bface.graph.edgelist.get(bface.graph.facelist.get(i).edgeId);
+            v = bface.graph.vertexlist.get(root.startId);
+                System.out.println( v.p.x +" , " + v.p.y);
+            nextedge = bface.graph.edgelist.get(root.nextEdgeId);
+            while(nextedge.id != root.id){
+                v = bface.graph.vertexlist.get(nextedge.startId);
+                System.out.println( v.p.x +" , " + v.p.y);
+                nextedge = bface.graph.edgelist.get(nextedge.nextEdgeId);
+            }
+        }
+       
     }
 
     class LineSegmentComparator implements Comparator<LineSegment> {
 
         @Override
         public int compare(LineSegment o1, LineSegment o2) {
-            if (o1.getXIntersectionLambda(lambda) > o2.getXIntersectionLambda(lambda)) {
+            if(o1 != null && o1.equals(o2)) return 0;
+            
+            if ( (o1.getXIntersectionLambda(lambda) > o2.getXIntersectionLambda(lambda)) ||
+                        (o1.getXIntersectionLambda(lambda) - o2.getXIntersectionLambda(lambda)) < 0.001 ) {
                 return 1;
             } else {
                 return -1;
@@ -253,6 +344,8 @@ public class BoundedFace {
 
         @Override
         public int compare(Point o1, Point o2) {
+            if(o1 != null && o1.equals(o2)) return 0;
+            
             if (o1.y > o2.y) {
                 return 1;
             } else {
