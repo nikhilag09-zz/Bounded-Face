@@ -1,6 +1,7 @@
 package boundedface;
 
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.TreeSet;
 
@@ -89,7 +90,7 @@ public class BoundedFace {
 
     public void eventIntersection() {
         Vertex a;
-        LineSegment l1,l2,tmp;
+        LineSegment l1,l2;
         l1= currentEvent.a;
         l2= currentEvent.b;
         
@@ -132,10 +133,13 @@ public class BoundedFace {
         
         if(l1.lastEdgeID !=-1){
             Edgel1down.nextEdgeId = edge1.id;
+            Edgel1down.endId = a.id;
+            Edgel1up.startId = a.id;
             edge1.previousEdgeId = Edgel1down.id;
         }
         if(l2.lastEdgeID !=-1){
-            
+            Edgel2down.endId = a.id;
+            Edgel2up.startId = a.id;
             Edgel2up.previousEdgeId = edge4.id;
             edge4.nextEdgeId = Edgel2up.id;
         }
@@ -157,7 +161,67 @@ public class BoundedFace {
         }
         /* next and previous assignment complete;*/
         
+        // adding Edges and vertex in the graph
+        graph.edgelist.put(edge1.id, edge1);
+        graph.edgelist.put(edge2.id, edge2);
+        graph.edgelist.put(edge3.id, edge3);
+        graph.edgelist.put(edge4.id, edge4);
+        graph.vertexlist.put(a.id, a);
+        
+        // Swaping the postion of line segment in height balanced tree
+        LineSet.remove(l2);
+        LineSet.add(l2);
+        
+    }
+    public void postprocessing(){
+        for (int i = 0; i < edgecount; i++) {
+            boolean faceflag = true;
+            Edge rootedge,lastedge,currentedge,twinedge,nextedge;
+            rootedge = graph.edgelist.get(i);
+            if(rootedge.visited)
+                continue;
+            rootedge.visited =true;
+            if(rootedge.nextEdgeId !=-1){
+                lastedge = rootedge;
+                currentedge = graph.edgelist.get(rootedge.nextEdgeId);
+                while(rootedge!=currentedge && faceflag){
+                    currentedge.visited = true;
+                    if(currentedge.nextEdgeId == -1){
+                        twinedge = graph.edgelist.get(currentedge.twinEdgeId);
+                        nextedge = graph.edgelist.get(twinedge.nextEdgeId);
+                        lastedge.nextEdgeId = nextedge.id;
+                        nextedge.previousEdgeId = lastedge.id;
+                        
+                        twinedge.visited = true;
+                        currentedge = lastedge;
+                    }
+                    else{
+                        lastedge = currentedge;
+                        currentedge = graph.edgelist.get(currentedge.nextEdgeId);
+                    }
+                    if(currentedge.id == rootedge.twinEdgeId){
+                        faceflag = false;
+                    }
+                }
+            }
+            else{
+                lastedge = graph.edgelist.get(rootedge.previousEdgeId);
+                twinedge = graph.edgelist.get(rootedge.twinEdgeId);
+                nextedge = graph.edgelist.get(twinedge.nextEdgeId);
+                lastedge.nextEdgeId = nextedge.id;
+                nextedge.previousEdgeId = lastedge.id;
                 
+                twinedge.visited = true;
+                faceflag = false;
+            }
+            
+            if(faceflag){
+                Face f = new Face();
+                f.Id = facecount++;
+                f.edgeId = rootedge.id;
+                graph.facelist.put(f.Id, f);
+            }
+        }
     }
 
     private void initializeQueue() {

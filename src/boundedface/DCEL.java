@@ -36,7 +36,7 @@ class Edge {
     Integer twinEdgeId;
     Integer nextEdgeId;
     Integer previousEdgeId;
-    Integer faceId;
+    boolean visited;
 
     public Edge() {
         startId=-1;
@@ -44,7 +44,7 @@ class Edge {
         twinEdgeId=-1;
         nextEdgeId=-1;
         previousEdgeId=-1;
-        faceId =-1;
+        visited = false;
     }
 }
 
