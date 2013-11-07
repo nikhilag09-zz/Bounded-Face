@@ -9,9 +9,19 @@ public class LineSegment {
     public Point end;
     public double slope;
     public int lastEdgeID;
+    public int id;
     boolean inf;
+
+    @Override
+    public boolean equals(Object obj) {
+        LineSegment l = (LineSegment) obj;
+        if(this.id == l.id)
+            return true;
+        return false;
+    }
     
-    public LineSegment(Point start, Point end) {
+    public LineSegment(Point start, Point end,int id) {
+        this.id = id;
         this.start = start;
         this.start.type = BoundedFace.EventType.Start;
         this.end = end;

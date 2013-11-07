@@ -24,11 +24,15 @@ public class BoundedFace {
     Integer edgecount;
     Integer facecount;
     Integer vertexcount;
+    Integer linecount;
     Point currentEvent;
     double lambda;
+    double previouslamda;
+    
 
-    public BoundedFace(List<LineSegment> set) {
-        this.LineSet = set;
+    public BoundedFace() {
+        linecount = 0;
+        this.LineSet = initrandomline(40);
         EventQueue = new TreeSet<Point>(new PointComparator());
         SweepStatus = new TreeSet<LineSegment>(new LineSegmentComparator());
         graph = new DCEL();
@@ -39,9 +43,15 @@ public class BoundedFace {
     }
 
     public void startSweepLine() {
+        lambda = Double.POSITIVE_INFINITY;
+        double tmp;
         while (!EventQueue.isEmpty()) {
             currentEvent = EventQueue.pollLast();
+            tmp = lambda;
             lambda = currentEvent.y;
+            if(Math.abs(tmp-lambda) >0.1){
+                previouslamda = tmp;
+            }
             switch (currentEvent.type) {
                 case Start:
                     eventStart();
@@ -63,7 +73,6 @@ public class BoundedFace {
     public void eventStart() {
         Point check;
         LineSegment p1, p2;
-        SweepStatus.add(currentEvent.a);
         p1 = SweepStatus.higher(currentEvent.a);
         p2 = SweepStatus.lower(currentEvent.a);
         
@@ -77,21 +86,23 @@ public class BoundedFace {
         if (check != null && check.y < lambda) {
             EventQueue.add(check);
         }
+        
+        SweepStatus.add(currentEvent.a);
     }
 
     public void eventEnd() {
         Point check;
         LineSegment p1, p2;
+        SweepStatus.remove(currentEvent.a);
         p1 = SweepStatus.higher(currentEvent.a);
         p2 = SweepStatus.lower(currentEvent.a);
         if (p1 != null && p2 != null) {
-            check = p2.getIntersection(p1);
+            check = p1.getIntersection(p2);
             if (check != null && check.y < lambda) {
                 EventQueue.add(check);
             }
         }
-        SweepStatus.remove(currentEvent.a);
-    }
+   }
 
     public void eventIntersection() {
         Vertex a;
@@ -102,6 +113,7 @@ public class BoundedFace {
         a = new Vertex();
         a.id = vertexcount++;
         a.p = currentEvent;
+        System.out.println(vertexcount + " " + a.p.x + " " + a.p.y );
         Edge edge1,edge2,edge3,edge4,tmp1,tmp2;
         Edge Edgel1down,Edgel1up,Edgel2down,Edgel2up;
         edge1= new Edge();
@@ -177,25 +189,53 @@ public class BoundedFace {
         graph.vertexlist.put(a.id, a);
         
         // Swaping the postion of line segment in height balanced tree
-        LineSegment l1lower, l2higher;
+        
+        
+        
+        l1.lastEdgeID = edge3.id;
+        l2.lastEdgeID = edge1.id;
+        double tmplambda;
+        tmplambda=lambda;
+        lambda = previouslamda;
+        
+//        LineSegment l2higher, l1lower;
+//        l1lower = SweepStatus.lower(l1);
+//        l2higher = SweepStatus.higher(l2);
+//        Point check;
+//        if(l2higher!=null){
+//            check = l2higher.getIntersection(l1);
+//            if (check != null && check.y < lambda) {
+//                EventQueue.add(check);
+//            }
+//        }
+//        check = l2.getIntersection(l1lower);
+//        if (check != null && check.y < lambda) {
+//            EventQueue.add(check);
+//        }
+        
+        SweepStatus.remove(l1);
+        lambda = tmplambda;
+        SweepStatus.add(l1);
+        lambda = lambda -0.1;
+        
+        LineSegment l1higher, l2lower, l2higher,l1lower;
+        l2lower = SweepStatus.lower(l2);
+        l1higher = SweepStatus.higher(l1);
         l1lower = SweepStatus.lower(l1);
         l2higher = SweepStatus.higher(l2);
+        
+        lambda = lambda +0.1;
         Point check;
-        if(l2higher!=null){
-            check = l2higher.getIntersection(l1);
+        if(l1higher!=null){
+            check = l1higher.getIntersection(l1);
             if (check != null && check.y < lambda) {
                 EventQueue.add(check);
             }
         }
-        check = l2.getIntersection(l1lower);
+        check = l2.getIntersection(l2lower);
         if (check != null && check.y < lambda) {
             EventQueue.add(check);
         }
-        l1.lastEdgeID = edge3.id;
-        l2.lastEdgeID = edge1.id;
-        SweepStatus.remove(l1);
-        SweepStatus.add(l1);
-        
     }
     public void postprocessing(){
         for (int i = 0; i < edgecount; i++) {
@@ -209,13 +249,17 @@ public class BoundedFace {
                 lastedge = rootedge;
                 currentedge = graph.edgelist.get(rootedge.nextEdgeId);
                 while(rootedge!=currentedge && faceflag){
-                    currentedge.visited = true;
+                    if(currentedge.visited == true){
+                        faceflag = false;
+                        break;
+                    }
                     if(currentedge.nextEdgeId == -1){
+//                        currentedge.visited = true;
                         twinedge = graph.edgelist.get(currentedge.twinEdgeId);
                         nextedge = graph.edgelist.get(twinedge.nextEdgeId);
                         lastedge.nextEdgeId = nextedge.id;
                         nextedge.previousEdgeId = lastedge.id;
-                        twinedge.visited = true;
+//                        twinedge.visited = true;
                         currentedge = nextedge;
                     }
                     else{
@@ -261,10 +305,7 @@ public class BoundedFace {
     public static void main(String[] args) {
         BoundedFace bface;
         List<LineSegment> linesegments;
-        
-        linesegments = initrandomline(10);
-        
-       bface = new BoundedFace(linesegments);
+       bface = new BoundedFace();
        
        bface.startSweepLine();
        
@@ -274,19 +315,19 @@ public class BoundedFace {
             Vertex v;
             root = bface.graph.edgelist.get(bface.graph.facelist.get(i).edgeId);
             v = bface.graph.vertexlist.get(root.startId);
-                System.out.println( v.p.x +" , " + v.p.y);
+                System.out.println( v.p.x +" , " + v.p.y +" " + v.id);
             nextedge = bface.graph.edgelist.get(root.nextEdgeId);
             while(nextedge.id != root.id){
                 v = bface.graph.vertexlist.get(nextedge.startId);
-                System.out.println( v.p.x +" , " + v.p.y);
+                System.out.println( v.p.x +" , " + v.p.y + "  " + v.id);
                 nextedge = bface.graph.edgelist.get(nextedge.nextEdgeId);
             }
         }
        
-        SVGCreator.drawLinesAndFaces(linesegments, bface.graph, bface.facecount);
+        SVGCreator.drawLinesAndFaces(bface.LineSet, bface.graph, bface.facecount,bface.vertexcount);
     }
     
-    public static List<LineSegment> initrandomline(int n){
+    private List<LineSegment> initrandomline(int n){
         List<LineSegment> linesegments = new ArrayList<LineSegment>();
         Point start,end,tmp;
         LineSegment a;
@@ -310,40 +351,115 @@ public class BoundedFace {
 
             start.type = EventType.Start;
             end.type = EventType.End;
-            a = new LineSegment(start, end);
+            a = new LineSegment(start, end,linecount++);
             start.a = a;
             end.a = a;
             linesegments.add(a);
         }
-//        //2
-//        
-//        start = new Point();
-//        end = new Point();
-//        start.x = 2;
-//        start.y = 5;
-//        start.type = EventType.Start;
-//        end.x = 1;
-//        end.y = 1;
-//        end.type = EventType.End;
-//        a = new LineSegment(start, end);
-//        linesegments.add(a);
-//        start.a = a;
-//        end.a = a;
-//        //3
-//        
-//        start = new Point();
-//        end = new Point();
-//        start.x = 4;
-//        start.y = 4;
-//        start.type = EventType.Start;
-//        end.x = 1;
-//        end.y = 3;
-//        end.type = EventType.End;
-//        a = new LineSegment(start, end);
-//        linesegments.add(a);
-//        start.a = a;
-//        end.a = a;
-//        
+        if(true)
+            return linesegments;
+        //1
+        
+        start = new Point();
+        end = new Point();
+        start.x = 20;
+        start.y = 60;
+        start.type = EventType.Start;
+        end.x = 60;
+        end.y = 30;
+        end.type = EventType.End;
+        a = new LineSegment(start, end,linecount++);
+        linesegments.add(a);
+        start.a = a;
+        end.a = a;
+        
+        //2
+        
+        start = new Point();
+        end = new Point();
+        start.x = 40;
+        start.y = 60;
+        start.type = EventType.Start;
+        end.x = 0;
+        end.y = 20;
+        end.type = EventType.End;
+        a = new LineSegment(start, end,linecount++);
+        linesegments.add(a);
+        start.a = a;
+        end.a = a;
+        
+        //3
+        
+        start = new Point();
+        end = new Point();
+        start.x = 10;
+        start.y = 50;
+        start.type = EventType.Start;
+        end.x = 50;
+        end.y = 20;
+        end.type = EventType.End;
+        a = new LineSegment(start, end,linecount++);
+        linesegments.add(a);
+        start.a = a;
+        end.a = a;
+        
+        //4
+        
+        start = new Point();
+        end = new Point();
+        start.x = 60;
+        start.y = 50;
+        start.type = EventType.Start;
+        end.x = 20;
+        end.y = 10;
+        end.type = EventType.End;
+        a = new LineSegment(start, end,linecount++);
+        linesegments.add(a);
+        start.a = a;
+        end.a = a;
+        //5
+        
+        start = new Point();
+        end = new Point();
+        start.x = 0;
+        start.y = 40;
+        start.type = EventType.Start;
+        end.x = 40;
+        end.y = 10;
+        end.type = EventType.End;
+        a = new LineSegment(start, end,linecount++);
+        linesegments.add(a);
+        start.a = a;
+        end.a = a;
+        //6
+        
+        start = new Point();
+        end = new Point();
+        start.x = 50;
+        start.y = 50;
+        start.type = EventType.Start;
+        end.x = 20;
+        end.y = 30;
+        end.type = EventType.End;
+        a = new LineSegment(start, end,linecount++);
+        linesegments.add(a);
+        start.a = a;
+        end.a = a;
+        //7
+        
+        start = new Point();
+        end = new Point();
+        start.x = 30;
+        start.y = 70;
+        start.type = EventType.Start;
+        end.x = 40;
+        end.y = 0;
+        end.type = EventType.End;
+        a = new LineSegment(start, end,linecount++);
+        linesegments.add(a);
+        start.a = a;
+        end.a = a;
+        
         return linesegments;
     }
 
@@ -351,10 +467,10 @@ public class BoundedFace {
 
         @Override
         public int compare(LineSegment o1, LineSegment o2) {
-            if(o1 != null && o1.equals(o2)) return 0;
+            if(o1.equals(o2)) return 0;
             
             if ( (o1.getXIntersectionLambda(lambda) > o2.getXIntersectionLambda(lambda)) ||
-                        (o1.getXIntersectionLambda(lambda) - o2.getXIntersectionLambda(lambda)) < 0.00001 ) {
+                        Math.abs(o1.getXIntersectionLambda(lambda) - o2.getXIntersectionLambda(lambda)) < 0.000001 ) {
                 return 1;
             } else {
                 return -1;
