@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.TreeSet;
+import java.util.Random;
 
 /**
  *
@@ -259,50 +260,9 @@ public class BoundedFace {
      */
     public static void main(String[] args) {
         BoundedFace bface;
-        List<LineSegment> linesegments = new ArrayList<LineSegment>();
-        Point start,end;
-        LineSegment a;
-        //1
-        start = new Point();
-        end = new Point();
-        start.x = 1;
-        start.y = 6;
-        start.type = EventType.Start;
-        end.x = 3;
-        end.y = 2;
-        end.type = EventType.End;
-        a = new LineSegment(start, end);
-        start.a = a;
-        end.a = a;
-        linesegments.add(a);
-        //2
+        List<LineSegment> linesegments;
         
-        start = new Point();
-        end = new Point();
-        start.x = 2;
-        start.y = 5;
-        start.type = EventType.Start;
-        end.x = 1;
-        end.y = 1;
-        end.type = EventType.End;
-        a = new LineSegment(start, end);
-        linesegments.add(a);
-        start.a = a;
-        end.a = a;
-        //3
-        
-        start = new Point();
-        end = new Point();
-        start.x = 4;
-        start.y = 4;
-        start.type = EventType.Start;
-        end.x = 1;
-        end.y = 3;
-        end.type = EventType.End;
-        a = new LineSegment(start, end);
-        linesegments.add(a);
-        start.a = a;
-        end.a = a;
+        linesegments = initrandomline(100);
         
        bface = new BoundedFace(linesegments);
        
@@ -323,6 +283,67 @@ public class BoundedFace {
             }
         }
        
+    }
+    
+    public static List<LineSegment> initrandomline(int n){
+        List<LineSegment> linesegments = new ArrayList<LineSegment>();
+        Point start,end,tmp;
+        LineSegment a;
+        Random randomgenerator = new Random();
+        
+        
+        //1
+        while(n-- > 0 ){
+            start = new Point();
+            end = new Point();
+            start.x = randomgenerator.nextInt(100);
+            start.y = randomgenerator.nextInt(100);
+
+            end.x = randomgenerator.nextInt(100);
+            end.y = randomgenerator.nextInt(100);
+            if(start.y<end.y){
+                tmp = start;
+                start =end;
+                end = tmp;
+            }
+
+            start.type = EventType.Start;
+            end.type = EventType.End;
+            a = new LineSegment(start, end);
+            start.a = a;
+            end.a = a;
+            linesegments.add(a);
+        }
+//        //2
+//        
+//        start = new Point();
+//        end = new Point();
+//        start.x = 2;
+//        start.y = 5;
+//        start.type = EventType.Start;
+//        end.x = 1;
+//        end.y = 1;
+//        end.type = EventType.End;
+//        a = new LineSegment(start, end);
+//        linesegments.add(a);
+//        start.a = a;
+//        end.a = a;
+//        //3
+//        
+//        start = new Point();
+//        end = new Point();
+//        start.x = 4;
+//        start.y = 4;
+//        start.type = EventType.Start;
+//        end.x = 1;
+//        end.y = 3;
+//        end.type = EventType.End;
+//        a = new LineSegment(start, end);
+//        linesegments.add(a);
+//        start.a = a;
+//        end.a = a;
+//        
+        return linesegments;
     }
 
     class LineSegmentComparator implements Comparator<LineSegment> {
