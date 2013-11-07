@@ -3,8 +3,8 @@ package boundedface;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.TreeSet;
 import java.util.Random;
+import java.util.TreeSet;
 
 /**
  *
@@ -262,7 +262,7 @@ public class BoundedFace {
         BoundedFace bface;
         List<LineSegment> linesegments;
         
-        linesegments = initrandomline(100);
+        linesegments = initrandomline(10);
         
        bface = new BoundedFace(linesegments);
        
@@ -283,6 +283,7 @@ public class BoundedFace {
             }
         }
        
+        SVGCreator.drawLinesAndFaces(linesegments, bface.graph, bface.facecount);
     }
     
     public static List<LineSegment> initrandomline(int n){
@@ -353,7 +354,7 @@ public class BoundedFace {
             if(o1 != null && o1.equals(o2)) return 0;
             
             if ( (o1.getXIntersectionLambda(lambda) > o2.getXIntersectionLambda(lambda)) ||
-                        (o1.getXIntersectionLambda(lambda) - o2.getXIntersectionLambda(lambda)) < 0.001 ) {
+                        (o1.getXIntersectionLambda(lambda) - o2.getXIntersectionLambda(lambda)) < 0.00001 ) {
                 return 1;
             } else {
                 return -1;

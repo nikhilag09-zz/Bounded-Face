@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1">
+<line x1 = "390.00" y1 = "430.00" x2 = "250.00" y2 = "50.00" style="stroke:rgb(0,0,0);stroke-width:2" />
+<line x1 = "760.00" y1 = "230.00" x2 = "380.00" y2 = "100.00" style="stroke:rgb(0,0,0);stroke-width:2" />
+<line x1 = "540.00" y1 = "790.00" x2 = "650.00" y2 = "170.00" style="stroke:rgb(0,0,0);stroke-width:2" />
+<line x1 = "540.00" y1 = "900.00" x2 = "880.00" y2 = "400.00" style="stroke:rgb(0,0,0);stroke-width:2" />
+<line x1 = "220.00" y1 = "160.00" x2 = "700.00" y2 = "80.00" style="stroke:rgb(0,0,0);stroke-width:2" />
+<line x1 = "430.00" y1 = "770.00" x2 = "890.00" y2 = "260.00" style="stroke:rgb(0,0,0);stroke-width:2" />
+<line x1 = "60.00" y1 = "90.00" x2 = "70.00" y2 = "50.00" style="stroke:rgb(0,0,0);stroke-width:2" />
+<line x1 = "200.00" y1 = "970.00" x2 = "30.00" y2 = "100.00" style="stroke:rgb(0,0,0);stroke-width:2" />
+<line x1 = "520.00" y1 = "500.00" x2 = "820.00" y2 = "100.00" style="stroke:rgb(0,0,0);stroke-width:2" />
+<line x1 = "80.00" y1 = "560.00" x2 = "120.00" y2 = "540.00" style="stroke:rgb(0,0,0);stroke-width:2" />
+<polygon points="613.59,375.21 571.35,613.28 613.59,375.21 646.26,191.09 445.52,122.41 646.26,191.09"style="fill:lime;stroke-width:1"/>
+</svg>
+
+</body>
+</html>
