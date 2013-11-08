@@ -238,7 +238,10 @@ public class BoundedFace {
         }
     }
     public void postprocessing(){
+        double area;
+        Vertex a,b;
         for (int i = 0; i < edgecount; i++) {
+            area=0;
             boolean faceflag = true;
             Edge rootedge,lastedge,currentedge,twinedge,nextedge;
             rootedge = graph.edgelist.get(i);
@@ -248,6 +251,10 @@ public class BoundedFace {
             if(rootedge.nextEdgeId !=-1){
                 lastedge = rootedge;
                 currentedge = graph.edgelist.get(rootedge.nextEdgeId);
+                a = graph.vertexlist.get(lastedge.startId);
+                b = graph.vertexlist.get(currentedge.startId);
+                area += (b.p.x - a.p.x)*(b.p.y + a.p.y);
+                
                 while(rootedge!=currentedge && faceflag){
                     if(currentedge.visited == true){
                         faceflag = false;
@@ -265,6 +272,10 @@ public class BoundedFace {
                     else{
                         lastedge = currentedge;
                         currentedge = graph.edgelist.get(currentedge.nextEdgeId);
+                        a = graph.vertexlist.get(lastedge.startId);
+                        b = graph.vertexlist.get(currentedge.startId);
+                        area += (b.p.x - a.p.x)*(b.p.y + a.p.y);
+                        
                     }
                     if(currentedge.id == rootedge.twinEdgeId){
                         faceflag = false;
@@ -283,10 +294,12 @@ public class BoundedFace {
             }
             
             if(faceflag){
-                Face f = new Face();
-                f.Id = facecount++;
-                f.edgeId = rootedge.id;
-                graph.facelist.put(f.Id, f);
+                if(area > 0){
+                    Face f = new Face();
+                    f.Id = facecount++;
+                    f.edgeId = rootedge.id;
+                    graph.facelist.put(f.Id, f);
+                }
             }
         }
         System.out.println("Total faces = " + facecount );
@@ -335,29 +348,29 @@ public class BoundedFace {
         
         
         //1
-        while(n-- > 0 ){
-            start = new Point();
-            end = new Point();
-            start.x = randomgenerator.nextInt(100);
-            start.y = randomgenerator.nextInt(100);
-
-            end.x = randomgenerator.nextInt(100);
-            end.y = randomgenerator.nextInt(100);
-            if(start.y<end.y){
-                tmp = start;
-                start =end;
-                end = tmp;
-            }
-
-            start.type = EventType.Start;
-            end.type = EventType.End;
-            a = new LineSegment(start, end,linecount++);
-            start.a = a;
-            end.a = a;
-            linesegments.add(a);
-        }
-        if(true)
-            return linesegments;
+//        while(n-- > 0 ){
+//            start = new Point();
+//            end = new Point();
+//            start.x = randomgenerator.nextInt(100);
+//            start.y = randomgenerator.nextInt(100);
+//
+//            end.x = randomgenerator.nextInt(100);
+//            end.y = randomgenerator.nextInt(100);
+//            if(start.y<end.y){
+//                tmp = start;
+//                start =end;
+//                end = tmp;
+//            }
+//
+//            start.type = EventType.Start;
+//            end.type = EventType.End;
+//            a = new LineSegment(start, end,linecount++);
+//            start.a = a;
+//            end.a = a;
+//            linesegments.add(a);
+//        }
+//        if(true)
+//            return linesegments;
         //1
         
         start = new Point();
