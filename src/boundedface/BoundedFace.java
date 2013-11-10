@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
+import java.util.Scanner;
 import java.util.TreeSet;
 
 /**
@@ -18,7 +19,7 @@ public class BoundedFace {
         Intersection, Start, End
     }
     TreeSet<Point> EventQueue;
-    TreeSet<LineSegment> SweepStatus;
+    ArrayList<LineSegment> SweepStatus;
     List<LineSegment> LineSet;
     DCEL graph;
     Integer edgecount;
@@ -27,14 +28,13 @@ public class BoundedFace {
     Integer linecount;
     Point currentEvent;
     double lambda;
-    double previouslamda;
     
 
     public BoundedFace() {
         linecount = 0;
-        this.LineSet = initrandomline(40);
+        this.LineSet = initline();
         EventQueue = new TreeSet<Point>(new PointComparator());
-        SweepStatus = new TreeSet<LineSegment>(new LineSegmentComparator());
+        SweepStatus = new ArrayList<LineSegment>();
         graph = new DCEL();
         vertexcount = 0;
         edgecount = 0;
@@ -43,15 +43,9 @@ public class BoundedFace {
     }
 
     public void startSweepLine() {
-        lambda = Double.POSITIVE_INFINITY;
-        double tmp;
         while (!EventQueue.isEmpty()) {
             currentEvent = EventQueue.pollLast();
-            tmp = lambda;
-            lambda = currentEvent.y;
-            if(Math.abs(tmp-lambda) >0.1){
-                previouslamda = tmp;
-            }
+            lambda = currentEvent.y;    
             switch (currentEvent.type) {
                 case Start:
                     eventStart();
@@ -73,9 +67,19 @@ public class BoundedFace {
     public void eventStart() {
         Point check;
         LineSegment p1, p2;
-        p1 = SweepStatus.higher(currentEvent.a);
-        p2 = SweepStatus.lower(currentEvent.a);
-        
+        LineSegment tmp=null;
+        p1=null;p2=null;
+        int i=0;
+        for ( i = 0; i < SweepStatus.size(); i++) {
+            tmp = SweepStatus.get(i);
+            if(tmp.getXIntersectionLambda(lambda) > currentEvent.x ){
+                p1 = tmp; 
+                break;
+            }
+        }
+        if(i>0){
+            p2 = SweepStatus.get(i-1);
+        }
         if(p1!=null){
             check = p1.getIntersection(currentEvent.a);
             if (check != null && check.y < lambda) {
@@ -87,15 +91,29 @@ public class BoundedFace {
             EventQueue.add(check);
         }
         
-        SweepStatus.add(currentEvent.a);
+        SweepStatus.add(i, currentEvent.a);
     }
 
     public void eventEnd() {
         Point check;
-        LineSegment p1, p2;
-        SweepStatus.remove(currentEvent.a);
-        p1 = SweepStatus.higher(currentEvent.a);
-        p2 = SweepStatus.lower(currentEvent.a);
+        LineSegment p1=null, p2=null;
+        LineSegment tmp;
+        
+        int i=0;
+        for ( i = 0; i < SweepStatus.size(); i++) {
+            tmp = SweepStatus.get(i);
+            if(tmp == currentEvent.a){
+                SweepStatus.remove(i);
+                break;
+            }
+        }
+        if(i< SweepStatus.size()){
+            p1= SweepStatus.get(i);
+        }
+        if(i>0){
+            p2 = SweepStatus.get(i-1);
+        }
+        
         if (p1 != null && p2 != null) {
             check = p1.getIntersection(p2);
             if (check != null && check.y < lambda) {
@@ -113,7 +131,7 @@ public class BoundedFace {
         a = new Vertex();
         a.id = vertexcount++;
         a.p = currentEvent;
-        System.out.println(vertexcount + " " + a.p.x + " " + a.p.y );
+        System.out.println((vertexcount-1) + " " + a.p.x + " " + a.p.y );
         Edge edge1,edge2,edge3,edge4,tmp1,tmp2;
         Edge Edgel1down,Edgel1up,Edgel2down,Edgel2up;
         edge1= new Edge();
@@ -194,37 +212,26 @@ public class BoundedFace {
         
         l1.lastEdgeID = edge3.id;
         l2.lastEdgeID = edge1.id;
-        double tmplambda;
-        tmplambda=lambda;
-        lambda = previouslamda;
         
-//        LineSegment l2higher, l1lower;
-//        l1lower = SweepStatus.lower(l1);
-//        l2higher = SweepStatus.higher(l2);
-//        Point check;
-//        if(l2higher!=null){
-//            check = l2higher.getIntersection(l1);
-//            if (check != null && check.y < lambda) {
-//                EventQueue.add(check);
-//            }
-//        }
-//        check = l2.getIntersection(l1lower);
-//        if (check != null && check.y < lambda) {
-//            EventQueue.add(check);
-//        }
+        LineSegment tmp;
         
-        SweepStatus.remove(l1);
-        lambda = tmplambda;
-        SweepStatus.add(l1);
-        lambda = lambda -0.1;
+        int i=0;
+        for ( i = 0; i < SweepStatus.size(); i++) {
+            tmp = SweepStatus.get(i);
+            if(tmp == l1){
+                SweepStatus.set(i, l2);
+                SweepStatus.set(i+1, l1);
+                break;
+            }
+        }
         
-        LineSegment l1higher, l2lower, l2higher,l1lower;
-        l2lower = SweepStatus.lower(l2);
-        l1higher = SweepStatus.higher(l1);
-        l1lower = SweepStatus.lower(l1);
-        l2higher = SweepStatus.higher(l2);
-        
-        lambda = lambda +0.1;
+        LineSegment l1higher =null, l2lower =null;
+        if(i>0){
+            l2lower = SweepStatus.get(i-1);
+        }
+        if(i<SweepStatus.size()-2){
+            l1higher = SweepStatus.get(i+2);
+        }
         Point check;
         if(l1higher!=null){
             check = l1higher.getIntersection(l1);
@@ -340,38 +347,98 @@ public class BoundedFace {
         SVGCreator.drawLinesAndFaces(bface.LineSet, bface.graph, bface.facecount,bface.vertexcount);
     }
     
-    private List<LineSegment> initrandomline(int n){
+    private List<LineSegment> initline(){
+        System.out.println("1 : Random Lines");
+        System.out.println("2 : User Specified Lines");
+        System.out.println("3 : Hardcoded lines ");
+        
+        System.out.print("Enter your Choice: ");
+        Scanner in = new Scanner(System.in);
+          int n = in.nextInt();
+        //1
+        switch(n){
+            case 1: return createRandomLine();                    
+            case 2: return userSpecifiedLine();                    
+            case 3: return hardCodedLine();                    
+            default: System.out.println("Wrong Choice selected");
+                     return null;
+        }
+        
+        
+    }
+    private List<LineSegment> createRandomLine(){
+        Scanner in = new Scanner(System.in);
+        System.out.print("Enter the number of Random Lines : ");
+        int n = in.nextInt();
+        System.out.print("Enter Max Value of X coordinate : ");
+        int xmax = in.nextInt();
+        System.out.print("Enter Max Value of Y coordinate : ");
+        int ymax = in.nextInt();
         List<LineSegment> linesegments = new ArrayList<LineSegment>();
         Point start,end,tmp;
         LineSegment a;
         Random randomgenerator = new Random();
         
+        while(n-- > 0 ){
+            start = new Point();
+            end = new Point();
+            start.x = randomgenerator.nextInt(xmax);
+            start.y = randomgenerator.nextInt(ymax);
+
+            end.x = randomgenerator.nextInt(xmax);
+            end.y = randomgenerator.nextInt(ymax);
+            if(start.y<end.y){
+                tmp = start;
+                start =end;
+                end = tmp;
+            }
+
+            start.type = EventType.Start;
+            end.type = EventType.End;
+            a = new LineSegment(start, end,linecount++);
+            start.a = a;
+            end.a = a;
+            linesegments.add(a);
+        }
+        return linesegments;
+    }
+    private List<LineSegment> userSpecifiedLine(){
+        Scanner in = new Scanner(System.in);
+        System.out.print("Enter the number of Lines : ");
+        int n = in.nextInt();
         
-        //1
-//        while(n-- > 0 ){
-//            start = new Point();
-//            end = new Point();
-//            start.x = randomgenerator.nextInt(100);
-//            start.y = randomgenerator.nextInt(100);
-//
-//            end.x = randomgenerator.nextInt(100);
-//            end.y = randomgenerator.nextInt(100);
-//            if(start.y<end.y){
-//                tmp = start;
-//                start =end;
-//                end = tmp;
-//            }
-//
-//            start.type = EventType.Start;
-//            end.type = EventType.End;
-//            a = new LineSegment(start, end,linecount++);
-//            start.a = a;
-//            end.a = a;
-//            linesegments.add(a);
-//        }
-//        if(true)
-//            return linesegments;
-        //1
+        List<LineSegment> linesegments = new ArrayList<LineSegment>();
+        Point start,end,tmp;
+        LineSegment a;
+        System.out.println("Enter The coordinates of end points of lines :");
+        while(n-- > 0 ){
+            start = new Point();
+            end = new Point();
+            start.x = in.nextInt();
+            start.y = in.nextInt();
+
+            end.x = in.nextInt();
+            end.y = in.nextInt();
+            if(start.y<end.y){
+                tmp = start;
+                start =end;
+                end = tmp;
+            }
+
+            start.type = EventType.Start;
+            end.type = EventType.End;
+            a = new LineSegment(start, end,linecount++);
+            start.a = a;
+            end.a = a;
+            linesegments.add(a);
+        }
+        return linesegments;
+    }
+    private List<LineSegment> hardCodedLine(){
+        
+        List<LineSegment> linesegments = new ArrayList<LineSegment>();
+        Point start,end,tmp;
+        LineSegment a;
         
         start = new Point();
         end = new Point();
@@ -476,20 +543,21 @@ public class BoundedFace {
         return linesegments;
     }
 
-    class LineSegmentComparator implements Comparator<LineSegment> {
-
-        @Override
-        public int compare(LineSegment o1, LineSegment o2) {
-            if(o1.equals(o2)) return 0;
-            
-            if ( (o1.getXIntersectionLambda(lambda) > o2.getXIntersectionLambda(lambda)) ||
-                        Math.abs(o1.getXIntersectionLambda(lambda) - o2.getXIntersectionLambda(lambda)) < 0.000001 ) {
-                return 1;
-            } else {
-                return -1;
-            }
-        }
-    }
+//    class LineSegmentComparator implements Comparator<LineSegment> {
+//
+//        @Override
+//        public int compare(LineSegment o1, LineSegment o2) {
+//            if(o1.equals(o2)) return 0;
+//            
+//            if ( (o1.getXIntersectionLambda(lambda) > o2.getXIntersectionLambda(lambda)) 
+//                    ||  Math.abs(o1.getXIntersectionLambda(lambda) - o2.getXIntersectionLambda(lambda)) < 0.000000000001 
+//                    ) {
+//                return 1;
+//            } else {
+//                return -1;
+//            }
+//        }
+//    }
 
     class PointComparator implements Comparator<Point> {
 

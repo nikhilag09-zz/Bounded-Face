@@ -3,6 +3,7 @@ package boundedface;
 /**
  *
  * @author utkarshjaiswal
+ * @author nikhilagrawal
  */
 public class Point{
     public double x;

@@ -10,6 +10,7 @@ import java.util.HashMap;
 /**
  *
  * @author utkarshjaiswal
+ * @author nikhilagrawal
  */
 public class DCEL {
     HashMap<Integer, Vertex> vertexlist;

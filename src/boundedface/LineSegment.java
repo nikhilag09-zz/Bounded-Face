@@ -3,6 +3,7 @@ package boundedface;
 /**
  *
  * @author utkarshjaiswal
+ * @author nikhilagrawal
  */
 public class LineSegment {
     public Point start;
