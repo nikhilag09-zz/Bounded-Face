@@ -27,12 +27,16 @@ public class LineSegment {
         this.start.type = BoundedFace.EventType.Start;
         this.end = end;
         this.end.type = BoundedFace.EventType.End;
+        if(start.x == end.x){
+            inf = true;
+        }
+        else{
+            inf= false;
+        }
         try{
             slope = (start.y - end.y)/(start.x - end.x);
-            inf = false;
         }
         catch(Exception e){
-            inf=true;
         }
         this.lastEdgeID = -1;
     }
@@ -45,6 +49,13 @@ public class LineSegment {
         Point p = new Point();
         p.type = BoundedFace.EventType.Intersection;
         
+        if(o.start.y == o.end.y){
+            p.x = getXIntersectionLambda(o.start.y);
+            p.y = o.start.y;
+            p.a = o;
+            p.b = this;
+            return p;
+        }
         if(inf && o.inf) {
             return null; // Parallel lines with inf slope.
         }
@@ -57,7 +68,7 @@ public class LineSegment {
             p.x = this.start.x;
             p.y = o.slope*p.x + (o.start.y - o.slope*o.start.x);
         }
-        else if(o.inf) {   
+        else if(o.inf) { 
             p.x = o.start.x;
             p.y = slope*p.x + (start.y - slope*start.x);
         }

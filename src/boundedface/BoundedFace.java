@@ -70,6 +70,19 @@ public class BoundedFace {
         LineSegment tmp=null;
         p1=null;p2=null;
         int i=0;
+        if(currentEvent.a.start.y == currentEvent.a.end.y){
+            for ( i = 0; i < SweepStatus.size(); i++) {
+                tmp = SweepStatus.get(i);
+                if(tmp.getXIntersectionLambda(lambda) > currentEvent.a.start.x && tmp.getXIntersectionLambda(lambda) < currentEvent.a.end.x ){
+                    check = tmp.getIntersection(currentEvent.a);
+                    if(check !=null){
+                        EventQueue.add(check);
+                    }
+                }
+            }
+            return;
+        }
+        i=0;
         for ( i = 0; i < SweepStatus.size(); i++) {
             tmp = SweepStatus.get(i);
             if(tmp.getXIntersectionLambda(lambda) > currentEvent.x ){
@@ -100,6 +113,10 @@ public class BoundedFace {
         LineSegment tmp;
         
         int i=0;
+        
+        if(currentEvent.a.start.y == currentEvent.a.end.y){
+            return;
+        }
         for ( i = 0; i < SweepStatus.size(); i++) {
             tmp = SweepStatus.get(i);
             if(tmp == currentEvent.a){
@@ -158,15 +175,19 @@ public class BoundedFace {
         edge2.nextEdgeId = edge3.id;
         edge3.previousEdgeId = edge2.id;
         Edgel1down = graph.edgelist.get(l1.lastEdgeID);
-        if(Edgel1down != null)
-                Edgel1up = graph.edgelist.get(Edgel1down.twinEdgeId);
-        else
+        if(Edgel1down != null) {
+            Edgel1up = graph.edgelist.get(Edgel1down.twinEdgeId);
+        }
+        else {
             Edgel1up = null;
+        }
         Edgel2down = graph.edgelist.get(l2.lastEdgeID);
-        if(Edgel2down != null)
+        if(Edgel2down != null) {
             Edgel2up = graph.edgelist.get(Edgel2down.twinEdgeId);
-        else
+        }
+        else {
             Edgel2up = null;
+        }
         
         if(l1.lastEdgeID !=-1){
             Edgel1down.nextEdgeId = edge1.id;
@@ -225,6 +246,9 @@ public class BoundedFace {
             }
         }
         
+        if(currentEvent.a.start.y == currentEvent.a.end.y){
+            return;
+        }
         LineSegment l1higher =null, l2lower =null;
         if(i>0){
             l2lower = SweepStatus.get(i-1);
@@ -392,6 +416,11 @@ public class BoundedFace {
                 start =end;
                 end = tmp;
             }
+            else if(start.x > end.x){
+                tmp = start;
+                start =end;
+                end = tmp;
+            }
 
             start.type = EventType.Start;
             end.type = EventType.End;
@@ -420,6 +449,11 @@ public class BoundedFace {
             end.x = in.nextInt();
             end.y = in.nextInt();
             if(start.y<end.y){
+                tmp = start;
+                start =end;
+                end = tmp;
+            }
+            else if(start.x > end.x){
                 tmp = start;
                 start =end;
                 end = tmp;
